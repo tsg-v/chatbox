@@ -65,6 +65,7 @@ function _Block(props: Props) {
     const { msg, setMsg } = props
     const [isHovering, setIsHovering] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+    const messageRef = useRef<HTMLDivElement>(null)
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -75,6 +76,85 @@ function _Block(props: Props) {
         setAnchorEl(null);
     };
 
+    // Detect and enhance code blocks after markdown rendering
+    useEffect(() => {
+        if (!messageRef.current || isEditing) return;
+
+        // Use setTimeout to ensure dangerouslySetInnerHTML has rendered
+        const timer = setTimeout(() => {
+            const codeBlocks = messageRef.current?.querySelectorAll('pre.hljs');
+            if (!codeBlocks || codeBlocks.length === 0) return;
+
+            codeBlocks.forEach((block) => {
+                const codeElement = block.querySelector('code');
+                if (!codeElement) return;
+
+                // Extract clean text content
+                const codeText = codeElement.textContent || '';
+
+                // Check if already wrapped
+                const existingWrapper = (block.parentElement as HTMLElement);
+                if (existingWrapper?.classList.contains('code-block-wrapper')) {
+                    return; // Already wrapped, CSS handles theme changes
+                }
+
+                // Create wrapper div
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block-wrapper';
+
+                // Create copy button
+                const copyButton = document.createElement('button');
+                copyButton.className = 'code-copy-button';
+                copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+                copyButton.title = 'Copy code';
+                copyButton.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                    </svg>
+                `;
+
+                // Copy functionality
+                copyButton.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(codeText);
+                        // Success feedback
+                        copyButton.classList.add('copied');
+                        copyButton.innerHTML = `
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        `;
+                        copyButton.setAttribute('aria-label', 'Code copied!');
+                        
+                        setTimeout(() => {
+                            copyButton.classList.remove('copied');
+                            copyButton.innerHTML = `
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                            `;
+                            copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+                        }, 2000);
+                    } catch (err) {
+                        // Error feedback
+                        copyButton.classList.add('error');
+                        copyButton.setAttribute('aria-label', 'Failed to copy');
+                        setTimeout(() => {
+                            copyButton.classList.remove('error');
+                            copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+                        }, 2000);
+                    }
+                });
+
+                // Wrap the code block
+                block.parentNode?.insertBefore(wrapper, block);
+                wrapper.appendChild(block);
+                wrapper.appendChild(copyButton);
+            });
+        }, 0);
+        
+        return () => clearTimeout(timer);
+    }, [msg.content, isEditing]);
 
     const tips: string[] = []
     if (props.showWordCount) {
@@ -151,6 +231,7 @@ function _Block(props: Props) {
                                     />
                                 ) : (
                                     <Box
+                                        ref={messageRef}
                                         sx={{
                                             // bgcolor: "Background",
                                         }}
