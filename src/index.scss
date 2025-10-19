@@ -100,3 +100,89 @@ html[data-theme='light'] {
         display: none;
     }
 }
+
+// ------------ Code Block Copy Button ---------------
+
+.code-block-wrapper {
+    position: relative;
+    margin-bottom: 1em;
+    display: block;
+    width: 100%;
+}
+
+.code-block-wrapper pre {
+    margin: 0;
+    position: relative;
+    padding-right: 58px; // Extra space for button
+}
+
+.code-copy-button {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+    z-index: 9999 !important;
+    min-width: 34px;
+    min-height: 34px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0 !important;
+    left: auto !important;
+    transform-origin: center;
+    
+    svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+    }
+    
+    &:hover {
+        transform: scale(1.05);
+    }
+    
+    &.copied {
+        background: rgba(76, 175, 80, 0.9) !important;
+        color: #fff !important;
+    }
+    
+    &.error {
+        background: rgba(244, 67, 54, 0.9) !important;
+        color: #fff !important;
+    }
+}
+
+.code-block-wrapper:hover .code-copy-button {
+    opacity: 1;
+}
+
+// Dark theme styles
+html[data-theme='dark'] {
+    .code-copy-button {
+        background: rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+    }
+}
+
+// Light theme styles
+html[data-theme='light'] {
+    .code-copy-button {
+        background: rgba(0, 0, 0, 0.08);
+        color: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        
+        &:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+    }
+}
