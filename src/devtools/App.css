@@ -1,3 +1,64 @@
 .App {
   text-align: center;
 }
+
+/* Drag and Drop Styles */
+.sortable-session-item {
+  transition: transform 200ms ease, opacity 200ms ease;
+  position: relative;
+}
+
+.sortable-session-item:hover .drag-handle-icon {
+  opacity: 1;
+}
+
+.drag-handle-icon {
+  opacity: 0.3;
+  transition: opacity 200ms ease;
+  cursor: grab;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.drag-handle-icon:hover {
+  opacity: 0.7;
+}
+
+.drag-handle-icon:active {
+  cursor: grabbing;
+}
+
+/* Dragging state */
+.sortable-session-item[data-dragging="true"] {
+  opacity: 0.5;
+  z-index: 1000;
+}
+
+/* Drag overlay styles */
+.drag-overlay {
+  cursor: grabbing !important;
+}
+
+.drag-overlay .drag-handle-icon {
+  cursor: grabbing !important;
+  opacity: 1;
+}
+
+/* Drop indicator - shows where session will be dropped */
+.sortable-session-item[data-over="true"] {
+  border-top: 2px solid #1976d2;
+  margin-top: 2px;
+}
+
+.sortable-session-item[data-over="true"]:first-child {
+  border-top: 2px solid #1976d2;
+  padding-top: 2px;
+}
+
+/* Smooth height transition for drop indicator */
+.sortable-session-item {
+  border-top: 2px solid transparent;
+  transition: border-color 150ms ease, transform 200ms ease, opacity 200ms ease;
+}

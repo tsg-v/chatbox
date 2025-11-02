@@ -13,7 +13,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import StyledMenu from './StyledMenu';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const { useState } = React
 
@@ -26,7 +29,7 @@ export interface Props {
     editMe: () => void
 }
 
-export default function SessionItem(props: Props) {
+const SessionItem = React.memo(function SessionItem(props: Props) {
     const { session, selected, switchMe, deleteMe, copyMe, editMe } = props
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -38,12 +41,42 @@ export default function SessionItem(props: Props) {
         setAnchorEl(null);
     };
 
+    // Setup sortable
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: session.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition: transition || 'transform 200ms ease',
+        opacity: isDragging ? 0.5 : 1,
+        position: 'relative' as const,
+    };
+
     return (
         <MenuItem
+            ref={setNodeRef}
+            style={style}
             key={session.id}
             selected={selected}
             onClick={() => switchMe()}
+            className="sortable-session-item"
         >
+            <ListItemIcon 
+                {...attributes} 
+                {...listeners} 
+                style={{ cursor: 'grab', touchAction: 'none' }}
+                className="drag-handle-icon"
+            >
+                <IconButton size="small">
+                    <DragIndicatorIcon fontSize="small" />
+                </IconButton>
+            </ListItemIcon>
             <ListItemIcon>
                 <IconButton><ChatBubbleOutlineOutlinedIcon fontSize="small" /></IconButton>
             </ListItemIcon>
@@ -94,4 +127,6 @@ export default function SessionItem(props: Props) {
             </StyledMenu>
         </MenuItem>
     )
-}
+})
+
+export default SessionItem
