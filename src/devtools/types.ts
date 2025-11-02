@@ -34,4 +34,5 @@ export interface Settings {
     showWordCount?: boolean
     showTokenCount?: boolean
     theme: ThemeMode
+    sessionOrder?: string[] // Order of session IDs for drag-and-drop
 }

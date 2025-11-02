@@ -4,6 +4,7 @@ import * as defaults from './defaults'
 import * as openai from './openai-node'
 import { v4 as uuidv4 } from 'uuid';
 import { ThemeMode } from './theme';
+import { arrayMove } from '@dnd-kit/sortable';
 
 // ipc
 
@@ -33,6 +34,7 @@ export function getDefaultSettings(): Settings {
         showWordCount: false,
         showTokenCount: false,
         theme: ThemeMode.System,
+        sessionOrder: [],
     }
 }
 
@@ -53,6 +55,9 @@ export async function readSettings(): Promise<Settings> {
     }
     if (setting.theme === undefined) {
         setting.theme = getDefaultSettings().theme;
+    }
+    if (setting.sessionOrder === undefined) {
+        setting.sessionOrder = getDefaultSettings().sessionOrder;
     }
     return setting
 }
@@ -111,9 +116,30 @@ export default function useStore() {
     const [chatSessions, _setChatSessions] = useState<Session[]>([createSession()])
     const [currentSession, switchCurrentSession] = useState<Session>(chatSessions[0])
     useEffect(() => {
-        readSessions().then((sessions: Session[]) => {
+        // Load both settings and sessions, then initialize sessionOrder
+        Promise.all([readSettings(), readSessions()]).then(([loadedSettings, sessions]) => {
             _setChatSessions(sessions)
             switchCurrentSession(sessions[0])
+            
+            // Initialize sessionOrder if empty (first time or migration)
+            if (!loadedSettings.sessionOrder || loadedSettings.sessionOrder.length === 0) {
+                const sessionIds = sessions.map(s => s.id)
+                const updatedSettings = { ...loadedSettings, sessionOrder: sessionIds }
+                _setSettings(updatedSettings)
+                writeSettings(updatedSettings)
+            } else {
+                // Verify all sessions are in sessionOrder, add missing ones
+                const existingOrder = loadedSettings.sessionOrder
+                const allSessionIds = sessions.map(s => s.id)
+                const missingIds = allSessionIds.filter(id => !existingOrder.includes(id))
+                
+                if (missingIds.length > 0) {
+                    const updatedOrder = [...existingOrder, ...missingIds]
+                    const updatedSettings = { ...loadedSettings, sessionOrder: updatedOrder }
+                    _setSettings(updatedSettings)
+                    writeSettings(updatedSettings)
+                }
+            }
         })
     }, [])
     const setSessions = (sessions: Session[]) => {
@@ -130,6 +156,10 @@ export default function useStore() {
             switchCurrentSession(sessions[0])
         }
         setSessions(sessions)
+        
+        // Remove from sessionOrder
+        const newOrder = (settings.sessionOrder || []).filter(id => id !== target.id)
+        setSettings({ ...settings, sessionOrder: newOrder })
     }
     const updateChatSession = (session: Session) => {
         const sessions = chatSessions.map((s) => {
@@ -147,6 +177,10 @@ export default function useStore() {
         const sessions = [...chatSessions, session]
         setSessions(sessions)
         switchCurrentSession(session)
+        
+        // Add to end of sessionOrder
+        const newOrder = [...(settings.sessionOrder || []), session.id]
+        setSettings({ ...settings, sessionOrder: newOrder })
     }
     const createEmptyChatSession = () => {
         createChatSession(createSession())
@@ -157,6 +191,20 @@ export default function useStore() {
             ...session,
             messages,
         })
+    }
+
+    // Reorder sessions based on drag-and-drop
+    const reorderSessions = (activeId: string, overId: string) => {
+        const currentOrder = settings.sessionOrder || []
+        const oldIndex = currentOrder.indexOf(activeId)
+        const newIndex = currentOrder.indexOf(overId)
+        
+        if (oldIndex === -1 || newIndex === -1) return
+        
+        // Use arrayMove utility from @dnd-kit/sortable for proper reordering
+        const newOrder = arrayMove(currentOrder, oldIndex, newIndex)
+        
+        setSettings({ ...settings, sessionOrder: newOrder })
     }
 
     const [toasts, _setToasts] = useState<{id: string, content: string}[]>([])
@@ -180,6 +228,7 @@ export default function useStore() {
         updateChatSession,
         deleteChatSession,
         createEmptyChatSession,
+        reorderSessions,
 
         currentSession,
         switchCurrentSession,
