@@ -122,14 +122,38 @@ export default function useStore() {
     }
 
     const deleteChatSession = (target: Session) => {
+        // Check if we're deleting the currently active session
+        const isCurrentSession = target.id === currentSession.id
+        
+        // Find the index of the session being deleted
+        const deletedIndex = chatSessions.findIndex((s) => s.id === target.id)
+        
+        // Remove the session
         const sessions = chatSessions.filter((s) => s.id !== target.id)
-        if (sessions.length === 0) {
-            sessions.push(createSession())
-        }
-        if (target.id === currentSession.id) {
-            switchCurrentSession(sessions[0])
-        }
+        
+        // Update sessions list first
         setSessions(sessions)
+        
+        // Smart navigation: only switch if deleting the active session
+        if (isCurrentSession && sessions.length > 0) {
+            // Deleting active session: switch to previous session, or next if first
+            const newIndex = deletedIndex > 0 ? deletedIndex - 1 : 0
+            const newSession = sessions[newIndex]
+            // Use setTimeout to ensure state update happens after sessions update
+            setTimeout(() => {
+                switchCurrentSession({ ...newSession })
+            }, 0)
+        } else if (!isCurrentSession && sessions.length > 0) {
+            // Deleting inactive session: stay on current session
+            // Force React to re-render by creating a new reference to the current session
+            const updatedCurrentSession = sessions.find(s => s.id === currentSession.id)
+            if (updatedCurrentSession) {
+                // Use setTimeout to ensure state update happens after sessions update
+                setTimeout(() => {
+                    switchCurrentSession({ ...updatedCurrentSession })
+                }, 0)
+            }
+        }
     }
     const updateChatSession = (session: Session) => {
         const sessions = chatSessions.map((s) => {

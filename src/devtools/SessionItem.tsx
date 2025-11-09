@@ -52,7 +52,10 @@ export default function SessionItem(props: Props) {
                     {session.name}
                 </Typography>
             </ListItemText>
-            <IconButton onClick={handleClick}>
+            <IconButton onClick={(event) => {
+                event.stopPropagation()  // Prevent MenuItem onClick from firing
+                handleClick(event)
+            }}>
                 <MoreHorizOutlinedIcon />
             </IconButton>
             <StyledMenu

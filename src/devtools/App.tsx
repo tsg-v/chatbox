@@ -193,22 +193,32 @@ function Main() {
                             }
                         >
                             {
-                                store.chatSessions.map((session, ix) => (
-                                    <SessionItem selected={store.currentSession.id === session.id}
-                                        session={session}
-                                        switchMe={() => {
-                                            store.switchCurrentSession(session)
-                                            document.getElementById('message-input')?.focus() // better way?
-                                        }}
-                                        deleteMe={() => store.deleteChatSession(session)}
-                                        copyMe={() => {
-                                            const newSession = createSession(session.name + ' Copyed')
-                                            newSession.messages = session.messages
-                                            store.createChatSession(newSession, ix)
-                                        }}
-                                        editMe={() => setConfigureChatConfig(session)}
-                                    />
-                                ))
+                                store.chatSessions.length === 0 ? (
+                                    <MenuItem disabled>
+                                        <ListItemText>
+                                            <Typography variant="body2" color="text.secondary" align="center">
+                                                No chat sessions. Create a new one below!
+                                            </Typography>
+                                        </ListItemText>
+                                    </MenuItem>
+                                ) : (
+                                    store.chatSessions.map((session, ix) => (
+                                        <SessionItem selected={store.currentSession.id === session.id}
+                                            session={session}
+                                            switchMe={() => {
+                                                store.switchCurrentSession(session)
+                                                document.getElementById('message-input')?.focus() // better way?
+                                            }}
+                                            deleteMe={() => store.deleteChatSession(session)}
+                                            copyMe={() => {
+                                                const newSession = createSession(session.name + ' Copyed')
+                                                newSession.messages = session.messages
+                                                store.createChatSession(newSession, ix)
+                                            }}
+                                            editMe={() => setConfigureChatConfig(session)}
+                                        />
+                                    ))
+                                )
                             }
                         </MenuList>
 
@@ -265,6 +275,33 @@ function Main() {
                         height: '100%',
                     }}
                 >
+                    {store.chatSessions.length === 0 ? (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: '100%',
+                                gap: 2,
+                            }}
+                        >
+                            <ChatBubbleOutlineOutlinedIcon sx={{ fontSize: 80, color: 'text.secondary', opacity: 0.3 }} />
+                            <Typography variant="h5" color="text.secondary">
+                                No Chat Sessions
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                                Create a new chat session to get started
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => store.createEmptyChatSession()}
+                            >
+                                New Chat
+                            </Button>
+                        </Box>
+                    ) : (
                     <Stack sx={{
                         height: '100%',
                         padding: '20px 0',
@@ -355,6 +392,7 @@ function Main() {
                             />
                         </Box>
                     </Stack>
+                    )}
                 </Grid>
 
                 <SettingWindow open={openSettingWindow}
